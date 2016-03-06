@@ -53,6 +53,8 @@ object Main {
       jstat <- eitherT(parse(csv))
       _     <- eitherT(plot("Heap Capacity", jstat.map(j => Data(j.timestamp, j.capacity))))
       _     <- eitherT(plot("Heap Utilization", jstat.map(j => Data(j.timestamp, j.utilization))))
+      _     <- eitherT(plot("Number of GC events", jstat.map(j => Data(j.timestamp, j.gcEvents))))
+      _     <- eitherT(plot("GC time", jstat.map(j => Data(j.timestamp, j.gcTime))))
     } yield ()).run
   }
 }

@@ -38,9 +38,13 @@ jstatplot jstat-result.txt
 ```
 Produced graphs:
 
-![Capacity](http://i.imgur.com/FYdRpIr.png)
+![Capacity](http://i.imgur.com/PgtJRsd.png)
 
-![Utilization](http://i.imgur.com/Y7ZC7Ya.png)
+![Utilization](http://i.imgur.com/aZUhlK5.png)
+
+![GC events](http://i.imgur.com/YECYLgA.png)
+
+![GC time](http://i.imgur.com/a6Phgv5.png)
 
 Build it
 ===========

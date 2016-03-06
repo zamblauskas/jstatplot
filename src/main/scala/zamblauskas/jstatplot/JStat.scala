@@ -11,7 +11,9 @@ import zamblauskas.jstatplot.Graph.Series
 case class JStat(
   timestamp: Double,
   capacity: Heap,
-  utilization: Heap
+  utilization: Heap,
+  gcEvents: NumGcEvents,
+  gcTime: GcTime
 )
 
 object JStat {
@@ -19,7 +21,9 @@ object JStat {
   implicit val r: ColumnReads[JStat] = (
     column("Timestamp").as[Double] and
     Heap.capacityReads             and
-    Heap.utilizationReads
+    Heap.utilizationReads          and
+    NumGcEvents.numGcEventsReads   and
+    GcTime.gcTimeReads
   )(JStat.apply)
 }
 
@@ -58,6 +62,48 @@ object Heap {
       Series[Heap](u => unitConvert(u.permanent), "Permanent", Color.Purple)
     ),
     yAxisLabel = s"Size ($unitName)",
+    xAxisLabel = "Timestamp (sec)"
+  )
+}
+
+case class NumGcEvents(
+  young: Int,
+  full: Int
+)
+
+object NumGcEvents {
+  val numGcEventsReads: ColumnReads[NumGcEvents] = (
+    column("YGC").as[Int] and
+    column("FGC").as[Int]
+  )(NumGcEvents.apply)
+
+  implicit val numGcEventsGraph: Graph[NumGcEvents] = Graph[NumGcEvents](
+    series = List(
+      Series[NumGcEvents](_.full.toDouble, "Full", Color.Red),
+      Series[NumGcEvents](_.young.toDouble, "Young", Color.Blue)
+    ),
+    yAxisLabel = "Number of events",
+    xAxisLabel = "Timestamp (sec)"
+  )
+}
+
+case class GcTime(
+  young: Double,
+  full: Double
+)
+
+object GcTime {
+  val gcTimeReads: ColumnReads[GcTime] = (
+    column("YGCT").as[Double] and
+    column("FGCT").as[Double]
+  )(GcTime.apply)
+
+  implicit val gcTimeGraph: Graph[GcTime] = Graph[GcTime](
+    series = List(
+      Series[GcTime](_.full, "Full", Color.Red),
+      Series[GcTime](_.young, "Young", Color.Blue)
+    ),
+    yAxisLabel = "Time (sec)",
     xAxisLabel = "Timestamp (sec)"
   )
 }
