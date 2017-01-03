@@ -3,63 +3,114 @@ package zamblauskas.jstatplot
 import com.twitter.conversions.storage._
 import com.twitter.util.StorageUnit
 import org.sameersingh.scalaplot.Style.Color
-import zamblauskas.csv.parser.ColumnBuilder._
-import zamblauskas.csv.parser.ColumnReads
+import zamblauskas.csv.parser._
 import zamblauskas.functional._
 import zamblauskas.jstatplot.Graph.Series
 
-case class JStat(
+case class JStat[H <: Heap](
   timestamp: Double,
-  capacity: Heap,
-  utilization: Heap,
+  capacity: H,
+  utilization: H,
   gcEvents: NumGcEvents,
   gcTime: GcTime
 )
 
 object JStat {
-
-  implicit val r: ColumnReads[JStat] = (
+  implicit val jstatJava7Reads: ColumnReads[JStat[HeapJava7]] = (
     column("Timestamp").as[Double] and
-    Heap.capacityReads             and
-    Heap.utilizationReads          and
+    HeapJava7.capacityReads        and
+    HeapJava7.utilizationReads     and
+    NumGcEvents.numGcEventsReads   and
+    GcTime.gcTimeReads
+  )(JStat.apply)
+
+  implicit val jstatJava8Reads: ColumnReads[JStat[HeapJava8]] = (
+    column("Timestamp").as[Double] and
+    HeapJava8.capacityReads        and
+    HeapJava8.utilizationReads     and
     NumGcEvents.numGcEventsReads   and
     GcTime.gcTimeReads
   )(JStat.apply)
 }
 
-case class Heap(
+sealed trait Heap
+
+case class HeapJava7(
   survivor0: StorageUnit,
   survivor1: StorageUnit,
   eden: StorageUnit,
   old: StorageUnit,
   permanent: StorageUnit
-)
+) extends Heap
 
-object Heap {
+case class HeapJava8(
+  survivor0: StorageUnit,
+  survivor1: StorageUnit,
+  eden: StorageUnit,
+  old: StorageUnit,
+  metaspace: StorageUnit,
+  compressed: StorageUnit
+) extends Heap
 
-  val capacityReads: ColumnReads[Heap] = (
+object HeapJava7 {
+
+  val capacityReads: ColumnReads[HeapJava7] = (
     column("S0C").as[Double].map(_.toLong.kilobytes) and
     column("S1C").as[Double].map(_.toLong.kilobytes) and
     column("EC").as[Double].map(_.toLong.kilobytes)  and
     column("OC").as[Double].map(_.toLong.kilobytes)  and
     column("PC").as[Double].map(_.toLong.kilobytes)
-  )(Heap.apply)
+  )(HeapJava7.apply)
 
-  val utilizationReads: ColumnReads[Heap] = (
+  val utilizationReads: ColumnReads[HeapJava7] = (
     column("S0U").as[Double].map(_.toLong.kilobytes) and
     column("S1U").as[Double].map(_.toLong.kilobytes) and
     column("EU").as[Double].map(_.toLong.kilobytes)  and
     column("OU").as[Double].map(_.toLong.kilobytes)  and
     column("PU").as[Double].map(_.toLong.kilobytes)
-  )(Heap.apply)
+  )(HeapJava7.apply)
 
-  def heapGraph(unitName: String, unitConvert: (StorageUnit) => Double): Graph[Heap] = Graph[Heap](
+  def heapGraph(unitName: String, unitConvert: (StorageUnit) => Double): Graph[HeapJava7] = Graph[HeapJava7](
     series = List(
-      Series[Heap](u => unitConvert(u.old), "Old", Color.Red),
-      Series[Heap](u => unitConvert(u.eden), "Eden", Color.Blue),
-      Series[Heap](u => unitConvert(u.survivor0), "Survivor 1", Color.Green),
-      Series[Heap](u => unitConvert(u.survivor1), "Survivor 2", Color.DarkGreen),
-      Series[Heap](u => unitConvert(u.permanent), "Permanent", Color.Purple)
+      Series[HeapJava7](u => unitConvert(u.old), "Old", Color.Red),
+      Series[HeapJava7](u => unitConvert(u.eden), "Eden", Color.Blue),
+      Series[HeapJava7](u => unitConvert(u.survivor0), "Survivor 1", Color.Green),
+      Series[HeapJava7](u => unitConvert(u.survivor1), "Survivor 2", Color.DarkGreen),
+      Series[HeapJava7](u => unitConvert(u.permanent), "Permanent", Color.Purple)
+    ),
+    yAxisLabel = s"Size ($unitName)",
+    xAxisLabel = "Timestamp (sec)"
+  )
+}
+
+object HeapJava8 {
+
+  val capacityReads: ColumnReads[HeapJava8] = (
+    column("S0C").as[Double].map(_.toLong.kilobytes) and
+    column("S1C").as[Double].map(_.toLong.kilobytes) and
+    column("EC").as[Double].map(_.toLong.kilobytes)  and
+    column("OC").as[Double].map(_.toLong.kilobytes)  and
+    column("MC").as[Double].map(_.toLong.kilobytes) and
+    column("CCSC").as[Double].map(_.toLong.kilobytes)
+  )(HeapJava8.apply)
+
+  val utilizationReads: ColumnReads[HeapJava8] = (
+    column("S0U").as[Double].map(_.toLong.kilobytes) and
+    column("S1U").as[Double].map(_.toLong.kilobytes) and
+    column("EU").as[Double].map(_.toLong.kilobytes)  and
+    column("OU").as[Double].map(_.toLong.kilobytes)  and
+    column("MU").as[Double].map(_.toLong.kilobytes) and
+    column("CCSU").as[Double].map(_.toLong.kilobytes)
+  )(HeapJava8.apply)
+
+  def heapGraph(unitName: String, unitConvert: (StorageUnit) => Double): Graph[HeapJava8] = Graph[HeapJava8](
+    series = List(
+      Series[HeapJava8](u => unitConvert(u.old), "Old", Color.Red),
+      Series[HeapJava8](u => unitConvert(u.eden), "Eden", Color.Blue),
+      Series[HeapJava8](u => unitConvert(u.survivor0), "Survivor 1", Color.Green),
+      Series[HeapJava8](u => unitConvert(u.survivor1), "Survivor 2", Color.DarkGreen),
+      Series[HeapJava8](u => unitConvert(u.metaspace), "Metaspace", Color.Purple),
+      Series[HeapJava8](u => unitConvert(u.compressed), "Compressed", Color.Maroon)
     ),
     yAxisLabel = s"Size ($unitName)",
     xAxisLabel = "Timestamp (sec)"
