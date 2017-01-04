@@ -49,8 +49,9 @@ object Graph {
       xLabel = graph.xAxisLabel,
       y = Axis(graph.yAxisLabel, range = range.flatMap(YRange.unapply)),
       showLegend = true,
-      legendPosX = org.sameersingh.scalaplot.LegendPosX.Left,
+      legendPosX = org.sameersingh.scalaplot.LegendPosX.Right,
       legendPosY = org.sameersingh.scalaplot.LegendPosY.Top,
+      legendPosRegion = org.sameersingh.scalaplot.LegendPosRegion.Outside,
       size = GraphSize.unapply(graphSize),
       style = HistogramStyle.RowStacked
     )
