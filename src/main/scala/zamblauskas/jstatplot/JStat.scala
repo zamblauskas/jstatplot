@@ -52,22 +52,35 @@ case class HeapJava8(
   compressed: StorageUnit
 ) extends Heap
 
+object CsvReads {
+  implicit val storageReads: Reads[StorageUnit] = new Reads[StorageUnit] {
+    override def read(column: Column): ReadResult[StorageUnit] = {
+      // jstat result might contain `-` for columns that don't have value, e.g.
+      // when running jstat from Java 8 against application running on Java 7 the
+      // "Metaspace" and "Compressed" will be `-`.
+      Reads.doubleReads.read(column.copy(value = column.value.replace('-', '0'))).map(_.toLong.kilobytes)
+    }
+  }
+}
+
 object HeapJava7 {
 
+  import CsvReads._
+
   val capacityReads: ColumnReads[HeapJava7] = (
-    column("S0C").as[Double].map(_.toLong.kilobytes) and
-    column("S1C").as[Double].map(_.toLong.kilobytes) and
-    column("EC").as[Double].map(_.toLong.kilobytes)  and
-    column("OC").as[Double].map(_.toLong.kilobytes)  and
-    column("PC").as[Double].map(_.toLong.kilobytes)
+    column("S0C").as[StorageUnit] and
+    column("S1C").as[StorageUnit] and
+    column("EC").as[StorageUnit]  and
+    column("OC").as[StorageUnit]  and
+    column("PC").as[StorageUnit]
   )(HeapJava7.apply)
 
   val utilizationReads: ColumnReads[HeapJava7] = (
-    column("S0U").as[Double].map(_.toLong.kilobytes) and
-    column("S1U").as[Double].map(_.toLong.kilobytes) and
-    column("EU").as[Double].map(_.toLong.kilobytes)  and
-    column("OU").as[Double].map(_.toLong.kilobytes)  and
-    column("PU").as[Double].map(_.toLong.kilobytes)
+    column("S0U").as[StorageUnit] and
+    column("S1U").as[StorageUnit] and
+    column("EU").as[StorageUnit]  and
+    column("OU").as[StorageUnit]  and
+    column("PU").as[StorageUnit]
   )(HeapJava7.apply)
 
   def heapGraph(unitName: String, unitConvert: (StorageUnit) => Double): Graph[HeapJava7] = Graph[HeapJava7](
@@ -85,22 +98,24 @@ object HeapJava7 {
 
 object HeapJava8 {
 
+  import CsvReads._
+
   val capacityReads: ColumnReads[HeapJava8] = (
-    column("S0C").as[Double].map(_.toLong.kilobytes) and
-    column("S1C").as[Double].map(_.toLong.kilobytes) and
-    column("EC").as[Double].map(_.toLong.kilobytes)  and
-    column("OC").as[Double].map(_.toLong.kilobytes)  and
-    column("MC").as[Double].map(_.toLong.kilobytes) and
-    column("CCSC").as[Double].map(_.toLong.kilobytes)
+    column("S0C").as[StorageUnit] and
+    column("S1C").as[StorageUnit] and
+    column("EC").as[StorageUnit]  and
+    column("OC").as[StorageUnit]  and
+    column("MC").as[StorageUnit]  and
+    column("CCSC").as[StorageUnit]
   )(HeapJava8.apply)
 
   val utilizationReads: ColumnReads[HeapJava8] = (
-    column("S0U").as[Double].map(_.toLong.kilobytes) and
-    column("S1U").as[Double].map(_.toLong.kilobytes) and
-    column("EU").as[Double].map(_.toLong.kilobytes)  and
-    column("OU").as[Double].map(_.toLong.kilobytes)  and
-    column("MU").as[Double].map(_.toLong.kilobytes) and
-    column("CCSU").as[Double].map(_.toLong.kilobytes)
+    column("S0U").as[StorageUnit] and
+    column("S1U").as[StorageUnit] and
+    column("EU").as[StorageUnit]  and
+    column("OU").as[StorageUnit]  and
+    column("MU").as[StorageUnit]  and
+    column("CCSU").as[StorageUnit]
   )(HeapJava8.apply)
 
   def heapGraph(unitName: String, unitConvert: (StorageUnit) => Double): Graph[HeapJava8] = Graph[HeapJava8](
