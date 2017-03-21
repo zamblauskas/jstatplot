@@ -2,6 +2,8 @@ package zamblauskas.jstatplot
 
 import java.io.File
 
+import org.apache.commons.lang3.exception.ExceptionUtils
+
 import scala.io.Source
 import scalaz.\/
 import scalaz.effect.IO
@@ -19,5 +21,5 @@ object Reader {
       .drop(skip)
       .map(_.trim.replaceAll("\\s+", ","))
       .mkString("\n")
-  }.leftMap(t => s"Cannot read file '${f.getAbsolutePath}': '${t.getMessage}'.") }
+  }.leftMap(t => s"Cannot read file '${f.getAbsolutePath}'\n${ExceptionUtils.getStackTrace(t)}") }
 }

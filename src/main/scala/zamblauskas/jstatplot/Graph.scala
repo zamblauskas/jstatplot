@@ -2,8 +2,9 @@ package zamblauskas.jstatplot
 
 import java.io.File
 
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.sameersingh.scalaplot.Implicits._
-import org.sameersingh.scalaplot.Style.{HistogramStyle, Color}
+import org.sameersingh.scalaplot.Style.{Color, HistogramStyle}
 import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
 import org.sameersingh.scalaplot.{BarData, BarSeries, Chart}
 
@@ -65,8 +66,9 @@ object Graph {
     * @param prefix prefix for the resulting graph file name.
     */
   def plot(chart: Chart, prefix: String, destinationDir: File): IO[\/[Error, Unit]] = IO { \/.fromTryCatchNonFatal {
+    // XXX: GnuplotPlotter.png asserts dir name to end with `/`.
     new GnuplotPlotter(chart).png(destinationDir.getAbsolutePath + "/", prefix)
-  }.leftMap(e => s"An error occurred while creating plot '$prefix': '${e.getMessage}'.") }
+  }.leftMap(e => s"An error occurred while creating plot '$prefix'\n${ExceptionUtils.getStackTrace(e)}") }
 
   private def xAxisName(graphWidth: Double, timestamps: Seq[Double]): Int => String = { idx =>
     val numShow = graphWidth / 96

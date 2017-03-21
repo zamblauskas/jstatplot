@@ -38,7 +38,7 @@ object Main {
     def plot[A](title: String, h: Seq[Data[A]])(implicit g: Graph[A]): IO[String \/ Unit] = {
       val chart = Graph.createChart(title, yRange, size, h)
       val name = jstatResult.getName + "-" + title.toLowerCase.replaceAll("\\s+", "-")
-      val destination = jstatResult.getParentFile
+      val destination = jstatResult.getAbsoluteFile.getParentFile
       Graph.plot(chart, name, destination)
     }
 
